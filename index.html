@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monitoreo de Temperatura</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Monitoreo de Temperatura</h1>
+  <div>
+    <canvas id="temperatureChart" width="400" height="200"></canvas>
+  </div>
+  <br>
+  <h3>Selecciona el día</h3>
+  <input type="date" id="datePicker">
+  <button onclick="filterData()">Mostrar Temperatura</button>
+  <p id="selectedTemperature"></p>
+
+  <script>
+    let temperatureData = [];
+    const ctx = document.getElementById('temperatureChart').getContext('2d');
+    let temperatureChart;
+
+    // Función para obtener los datos desde Google Sheets
+    async function fetchTemperatureData() {
+      const response = await fetch("TU_URL_DEL_APPS_SCRIPT");
+      const data = await response.json();
+      temperatureData = data;
+
+      // Crear el gráfico con los datos obtenidos
+      createChart();
+    }
+
+    // Crear el gráfico de temperatura
+    function createChart() {
+      const labels = temperatureData.map(entry => entry.fecha);
+      const temperatures = temperatureData.map(entry => entry.temperatura);
+
+      if (temperatureChart) {
+        temperatureChart.destroy(); // Destruir gráfico previo
+      }
+
+      temperatureChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Temperatura (°C)',
+            data: temperatures,
+            borderColor: 'rgba(75, 192, 192, 1)',
+            fill: false
+          }]
+        },
+        options: {
+          scales: {
+            x: { 
+              title: {
+                display: true,
+                text: 'Fecha'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Temperatura (°C)'
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Función para filtrar los datos por fecha
+    function filterData() {
+      const selectedDate = document.getElementById('datePicker').value;
+      const filteredData = temperatureData.filter(entry => entry.fecha === selectedDate);
+      if (filteredData.length > 0) {
+        document.getElementById('selectedTemperature').innerText = `Temperatura el ${selectedDate}: ${filteredData[0].temperatura} °C`;
+      } else {
+        document.getElementById('selectedTemperature').innerText = "No hay datos para esta fecha.";
+      }
+    }
+
+    // Llamar la función para cargar los datos
+    fetchTemperatureData();
+  </script>
+</body>
+</html>
